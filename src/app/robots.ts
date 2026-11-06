@@ -1,11 +1,19 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const base = getSiteUrl();
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/api/"] }],
-    sitemap: `${base}/sitemap.xml`,
-    host: base,
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/api/",       // Protect backend API routes from search crawlers
+          "/admin/",     // Block admin panels (if applicable)
+          "/checkout/",  // Block private session/cart flows
+        ],
+      },
+    ],
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }
