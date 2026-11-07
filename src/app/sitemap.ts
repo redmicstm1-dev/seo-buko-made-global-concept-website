@@ -3,6 +3,13 @@ import { products, categories } from "@/data/products";
 import { guides } from "@/data/guides";
 import { absoluteUrl } from "@/lib/seo";
 
+// Safe helper to extract and validate date strings/objects across varied data items
+function getValidDate(dateValue: unknown, fallback: Date): Date {
+  if (!dateValue) return fallback;
+  const parsed = new Date(dateValue as string | number | Date);
+  return isNaN(parsed.getTime()) ? fallback : parsed;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
@@ -55,20 +62,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
   });
 
   // 5. Dynamic Product Detail Pages
-  const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-    url: absoluteUrl(`/products/${product.slug}`),
-    lastModified: product.updatedAt ? new Date(product.updatedAt) : now,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+  const productRoutes: MetadataRoute.Sitemap = products.map((product) => {
+    const item = product as Record<string, unknown>;
+    const rawDate = item.updatedAt || item.updated_at || item.createdAt || item.created_at;
+
+    return {
+      url: absoluteUrl(`/products/${product.slug}`),
+      lastModified: getValidDate(rawDate, now),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    };
+  });
 
   // 6. Dynamic Guide / Blog Pages
-  const guideRoutes: MetadataRoute.Sitemap = guides.map((guide) => ({
-    url: absoluteUrl(`/guides/${guide.slug}`),
-    lastModified: guide.updatedAt ? new Date(guide.updatedAt) : now,
-    changeFrequency: "monthly",
-    priority: 0.7,
-  }));
+  const guideRoutes: MetadataRoute.Sitemap = guides.map((guide) => {
+    const item = guide as Record<string, unknown>;
+    const rawDate = item.updatedAt || item.updated_at || item.createdAt || item.created_at || item.date;
+
+    return {
+      url: absoluteUrl(`/guides/${guide.slug}`),
+      lastModified: getValidDate(rawDate, now),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    };
+  });
 
   return [
     ...coreStaticRoutes,
